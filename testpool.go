@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
@@ -14,11 +15,13 @@ type TestPool struct {
 	Name        string // database name
 	URL         PoolURL
 	originalURL PoolURL
+	closed      bool
 }
 
 // Close closes the test pool and deletes the testing database.
 func (t *TestPool) Close() {
-	if t.Pool != nil {
+	if t.Pool != nil && !t.closed {
+		t.closed = true
 		t.Pool.Close()
 	}
 
@@ -39,10 +42,15 @@ func (t *TestPool) Close() {
 	sql := fmt.Sprintf("drop database %s", t.URL.Name())
 	_, err = conn.Exec(context.Background(), sql)
 	if err != nil {
-		fmt.Printf("pgxtesting.Pool.Cleanup error running '%s': %v\n", sql, err)
-		return
+		if err, ok := err.(*pgconn.PgError); ok {
+			if err.Code != "3D000" {
+				fmt.Printf("pgxtesting.Pool.Cleanup error running '%s': %v\n", sql, err)
+			}
+		} else {
+			fmt.Printf("pgxtesting.Pool.Cleanup error running '%s': %v\n", sql, err)
+			return
+		}
 	}
-
 }
 
 func CreateTestDatabaseEnv(tb testing.TB) *TestPool {
