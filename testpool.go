@@ -47,7 +47,7 @@ func (t *TestPool) Close() {
 
 func CreateTestDatabaseEnv(tb testing.TB) *TestPool {
 	tb.Helper()
-	return CreateTestDatabase(tb, GetPgxPoolURL())
+	return CreateTestDatabase(tb, GetURL())
 }
 
 func CreateTestDatabase(tb testing.TB, pgxPoolURL string) *TestPool {
