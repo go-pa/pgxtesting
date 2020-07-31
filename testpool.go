@@ -25,32 +25,42 @@ func (t *TestPool) Close() {
 		t.Pool.Close()
 	}
 
+	err := t.dropTestDB()
+	if err != nil {
+		fmt.Println(err)
+	}
+
+}
+
+func (t *TestPool) dropTestDB() error {
+	ctx := context.Background()
 	pool, err := connectPostgres(t.originalURL)
 	if err != nil {
-		fmt.Println("pgxtesting.Pool.Cleanup error:", err)
-		return
+		return fmt.Errorf("pgxtesting.Pool.Cleanup error: %v", err)
 	}
 	defer pool.Close()
 
-	conn, err := pool.Acquire(context.Background())
+	conn, err := pool.Acquire(ctx)
 	if err != nil {
-		fmt.Println("pgxtesting.Pool.Cleanup error:", err)
-		return
+		return fmt.Errorf("pgxtesting.Pool.Cleanup error: %v", err)
+
 	}
 	defer conn.Release()
 
 	sql := fmt.Sprintf("drop database %s", t.URL.Name())
-	_, err = conn.Exec(context.Background(), sql)
+	_, err = conn.Exec(ctx, sql)
 	if err != nil {
 		if err, ok := err.(*pgconn.PgError); ok {
 			if err.Code != "3D000" {
-				fmt.Printf("pgxtesting.Pool.Cleanup error running '%s': %v\n", sql, err)
+				return fmt.Errorf("pgxtesting.Pool.Cleanup error running '%s': %v\n", sql, err)
 			}
 		} else {
-			fmt.Printf("pgxtesting.Pool.Cleanup error running '%s': %v\n", sql, err)
-			return
+			return fmt.Errorf("pgxtesting.Pool.Cleanup error running '%s': %v\n", sql, err)
 		}
 	}
+
+	return nil
+
 }
 
 func CreateTestDatabaseEnv(tb testing.TB) *TestPool {

@@ -48,12 +48,56 @@ func TestCreateTestDB(t *testing.T) {
 }
 
 func TestClosePool(t *testing.T) {
+	t.Parallel()
 	pool := CreateTestDatabase(t, testURL)
 
 	// this should not generate any logs
 	defer pool.Close()
+	if pool.closed {
+		t.Error("pool is closed")
+	}
+	pool.Close()
+	if !pool.closed {
+		t.Error("pool is not closed")
+	}
+	pool.Close()
+	if !pool.closed {
+		t.Error("pool is not closed")
+	}
+}
+
+func TestClosePoolStillOpenConnections(t *testing.T) {
+	t.Parallel()
+
+	pool := CreateTestDatabase(t, testURL)
+
+	pool2, err := connectPostgres(pool.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	pool.Pool.Close()
+	pool.closed = true
+
+	err = pool.dropTestDB() // this tames some time to run
+
+	pool2.Close()
+	if err == nil {
+		t.Fatal("expected error due to connection still being open")
+	}
+	if !strings.HasPrefix(err.Error(), "pgxtesting.Pool.Cleanup error running 'drop database ") ||
+		!strings.Contains(err.Error(), "SQLSTATE 55006") {
+		t.Fatalf("got wrong error message: %v", err)
+	}
+
+	err = pool.dropTestDB()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	pool.Close()
 	pool.Close()
+
 }
 
 func TestGlobalConfig(t *testing.T) {
@@ -65,8 +109,8 @@ func TestGlobalConfig(t *testing.T) {
 
 		}
 	}
-	equal(defaultURL, GetDefaultURL())
 	os.Setenv("PGURL", "")
+	equal(defaultURL, GetDefaultURL())
 	equal(GetURL(), GetDefaultURL())
 	os.Setenv("PGURL", "postgres://foo")
 	equal(GetURL(), "postgres://foo")
@@ -79,4 +123,5 @@ func TestGlobalConfig(t *testing.T) {
 	equal(GetURL(), GetDefaultURL())
 	os.Setenv("DBURL", "postgres://bar")
 	equal(GetURL(), "postgres://bar")
+	SetEnvName("PGURL")
 }
