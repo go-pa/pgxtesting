@@ -67,6 +67,10 @@ func TestClosePool(t *testing.T) {
 }
 
 func TestClosePoolStillOpenConnections(t *testing.T) {
+	if os.Getenv("NOSLOW") != "" {
+		t.Skip()
+		return
+	}
 	t.Parallel()
 
 	pool := CreateTestDatabase(t, testURL)
