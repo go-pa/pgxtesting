@@ -10,28 +10,7 @@ import (
 )
 
 func Example() {
-	// the t argument in your test function
-	var t *testing.T
-
-	// ─────────────────────────────────────────────────────────────
-
-	// You can create a test database from a database url.
-	// It will automatically clean up (drop the database) after the test has been run.
-	// The CreateTestDatabase function will fatal the test if the
-	// connection/creation to the datavbase fails there are no errors to
-	// handle.
-	_ = pgxtesting.CreateTestDatabase(t,
-		"postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable&pool_max_conns=500")
-
-	// You can also set a global pgxtesting default postgres url in a
-	// init() function in one of your test files.
-	pgxtesting.SetDefaultURL(
-		"postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable&pool_max_conns=500")
-
-	// and then only use this function to get a new pool for each test.
-	_ = pgxtesting.CreateTestDatabaseEnv(t)
-
-	// ─────────────────────────────────────────────────────────────
+	var t *testing.T // the t argument in your test function
 
 	pool := pgxtesting.CreateTestDatabaseEnv(t)
 
@@ -42,6 +21,32 @@ func Example() {
 	if err != nil {
 		t.Fatal(err)
 	}
+	log.Println("the test database name if", v)
+
+	// If you need an URL for the postgres test database you use pool.URL.
+	// If you need to strip pgxpool specific parameters from it to use it
+	// with the std library sql package or go-migrate, use the ConnURL()
+	// method.
+	m, _ := migrate.New(
+		"file://migrations",
+		pool.URL.ConnURL().String())
+
+	if err := m.Up(); err != nil {
+		log.Fatal(err)
+	}
+
+}
+
+func ExampleCreateTestDatabase() {
+	var t *testing.T // the t argument in your test function
+
+	// You can create a test database from a database url.
+	// It will automatically clean up (drop the database) after the test has been run.
+	// The CreateTestDatabase function will fatal the test if the
+	// connection/creation to the datavbase fails there are no errors to
+	// handle.
+	pool := pgxtesting.CreateTestDatabase(t,
+		"postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable&pool_max_conns=500")
 
 	// You can close the pool early if you want to free up database
 	// connections before the test has run and the testing package does it
@@ -53,20 +58,17 @@ func Example() {
 	// maximum number of connections if you have many subtests.
 	pool.Close()
 
-	// ─────────────────────────────────────────────────────────────
+}
 
-	pool2 := pgxtesting.CreateTestDatabaseEnv(t)
+func ExampleCreateTestDatabaseEnv() {
+	var t *testing.T // the t argument in your test function
 
-	// If you need an URL for the postgres test database you use pool.URL.
-	// If you need to strip pgxpool specific parameters from it to use it
-	// with the std library sql package or go-migrate, use the ConnURL()
-	// method.
-	m, _ := migrate.New(
-		"file://migrations",
-		pool2.URL.ConnURL().String())
+	// You set the pgxtesting default postgres url in a
+	// init() function in one of your test files.
+	pgxtesting.SetDefaultURL(
+		"postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable&pool_max_conns=500")
 
-	if err := m.Up(); err != nil {
-		log.Fatal(err)
-	}
+	// and then only use this function to get a new pool for each test.
+	_ = pgxtesting.CreateTestDatabaseEnv(t)
 
 }
