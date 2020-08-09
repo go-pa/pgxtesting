@@ -15,5 +15,5 @@ var (
 func getRandomDBName() string {
 	randomMu.Lock()
 	defer randomMu.Unlock()
-	return fmt.Sprintf("go_test_%v", random.Int63())
+	return fmt.Sprintf("pgxtesting_%v", random.Int63())
 }

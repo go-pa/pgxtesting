@@ -39,8 +39,8 @@ func TestCreateTestDB(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.HasPrefix(v, "go_test_") {
-		t.Errorf("%s does not start with go_test_", v)
+	if !strings.HasPrefix(v, "pgxtesting_") {
+		t.Errorf("%s does not start with pgxtesting_", v)
 	}
 	if v != pool.URL.Name() {
 		t.Errorf("'%s' != '%s'", v, pool.URL.Name())
