@@ -3,11 +3,30 @@ package pgxtesting
 import (
 	"context"
 	"fmt"
-	"testing"
 
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
+
+type TB interface {
+	Cleanup(func())
+	Error(args ...interface{})
+	Errorf(format string, args ...interface{})
+	Fail()
+	FailNow()
+	Failed() bool
+	Fatal(args ...interface{})
+	Fatalf(format string, args ...interface{})
+	Helper()
+	Log(args ...interface{})
+	Logf(format string, args ...interface{})
+	Name() string
+	Skip(args ...interface{})
+	SkipNow()
+	Skipf(format string, args ...interface{})
+	Skipped() bool
+	TempDir() string
+}
 
 // TestPool .
 type TestPool struct {
@@ -63,12 +82,12 @@ func (t *TestPool) dropTestDB() error {
 
 }
 
-func CreateTestDatabaseEnv(tb testing.TB) *TestPool {
+func CreateTestDatabaseEnv(tb TB) *TestPool {
 	tb.Helper()
 	return CreateTestDatabase(tb, GetURL())
 }
 
-func CreateTestDatabase(tb testing.TB, pgxPoolURL string) *TestPool {
+func CreateTestDatabase(tb TB, pgxPoolURL string) *TestPool {
 	tb.Helper()
 	pu, err := NewPoolURL(pgxPoolURL)
 	if err != nil {
