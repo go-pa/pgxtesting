@@ -2,9 +2,13 @@ package pgxtesting
 
 import (
 	"context"
+	"errors"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/jackc/pgconn"
+	"github.com/jackc/pgerrcode"
 )
 
 var testURL = "postgres://test:test@localhost:45432/test?sslmode=disable&pool_max_conns=1000"
@@ -20,14 +24,12 @@ func TestPoolURL(t *testing.T) {
 		t.Helper()
 		if a != b {
 			t.Errorf("not equal: '%v' '%v'", a, b)
-
 		}
 	}
 
 	equal(u.Name(), "dbname")
 	equal(u.String(), testu)
 	equal(u.ConnURL().String(), "postgres://user:pass@host:500/dbname")
-
 }
 
 func TestCreateTestDB(t *testing.T) {
@@ -83,15 +85,19 @@ func TestClosePoolStillOpenConnections(t *testing.T) {
 	pool.Pool.Close()
 	pool.closed = true
 
-	err = pool.dropTestDB() // this tames some time to run
+	err = pool.dropTestDB() // this takes some time to run
 
 	pool2.Close()
 	if err == nil {
 		t.Fatal("expected error due to connection still being open")
 	}
-	if !strings.HasPrefix(err.Error(), "pgxtesting.Pool.Cleanup error running 'drop database ") ||
-		!strings.Contains(err.Error(), "SQLSTATE 55006") {
-		t.Fatalf("got wrong error message: %v", err)
+
+	if perr := PgErr(err); err == nil {
+		t.Fatalf("error is not a pgconn error: %v", err)
+	} else {
+		if perr.Code != pgerrcode.ObjectInUse {
+			t.Fatalf("got wrong error message: %v", err)
+		}
 	}
 
 	err = pool.dropTestDB()
@@ -101,7 +107,6 @@ func TestClosePoolStillOpenConnections(t *testing.T) {
 
 	pool.Close()
 	pool.Close()
-
 }
 
 func TestGlobalConfig(t *testing.T) {
@@ -110,7 +115,6 @@ func TestGlobalConfig(t *testing.T) {
 		t.Helper()
 		if a != b {
 			t.Errorf("not equal: '%v' '%v'", a, b)
-
 		}
 	}
 	os.Setenv("PGURL", "")
@@ -128,4 +132,14 @@ func TestGlobalConfig(t *testing.T) {
 	os.Setenv("DBURL", "postgres://bar")
 	equal(GetURL(), "postgres://bar")
 	SetEnvName("PGURL")
+}
+
+// PgErr returns a *pgconn.PgError or nil if there are no PgErrors in the error
+// chain.
+func PgErr(err error) *pgconn.PgError {
+	var e *pgconn.PgError
+	if errors.As(err, &e) {
+		return e
+	}
+	return nil
 }

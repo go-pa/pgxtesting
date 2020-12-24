@@ -48,21 +48,19 @@ func (t *TestPool) Close() {
 	if err != nil {
 		fmt.Println(err)
 	}
-
 }
 
 func (t *TestPool) dropTestDB() error {
 	ctx := context.Background()
 	pool, err := connectPostgres(t.originalURL)
 	if err != nil {
-		return fmt.Errorf("pgxtesting.Pool.Cleanup error: %v", err)
+		return fmt.Errorf("pgxtesting.Pool.Cleanup error: %w", err)
 	}
 	defer pool.Close()
 
 	conn, err := pool.Acquire(ctx)
 	if err != nil {
-		return fmt.Errorf("pgxtesting.Pool.Cleanup error: %v", err)
-
+		return fmt.Errorf("pgxtesting.Pool.Cleanup error: %w", err)
 	}
 	defer conn.Release()
 
@@ -71,15 +69,14 @@ func (t *TestPool) dropTestDB() error {
 	if err != nil {
 		if err, ok := err.(*pgconn.PgError); ok {
 			if err.Code != "3D000" {
-				return fmt.Errorf("pgxtesting.Pool.Cleanup error running '%s': %v\n", sql, err)
+				return fmt.Errorf("pgxtesting.Pool.Cleanup error running '%s': %w\n", sql, err)
 			}
 		} else {
-			return fmt.Errorf("pgxtesting.Pool.Cleanup error running '%s': %v\n", sql, err)
+			return fmt.Errorf("pgxtesting.Pool.Cleanup error running '%s': %w\n", sql, err)
 		}
 	}
 
 	return nil
-
 }
 
 func CreateTestDatabaseEnv(tb TB) *TestPool {
@@ -97,7 +94,7 @@ func CreateTestDatabase(tb TB, pgxPoolURL string) *TestPool {
 	dbName := getRandomDBName()
 
 	if err := createDB(pu, dbName); err != nil {
-		tb.Fatalf("error creating database %v: %v", dbName, err)
+		tb.Fatalf("error creating database %v: %w", dbName, err)
 	}
 
 	URL := pu.SetName(dbName)
@@ -121,19 +118,19 @@ func createDB(pu PoolURL, dbName string) error {
 	ctx := context.Background()
 	pool, err := connectPostgres(pu)
 	if err != nil {
-		return fmt.Errorf("cannot connect to dburl %s: %v", pu, err)
+		return fmt.Errorf("cannot connect to dburl %s: %w", pu, err)
 	}
 	defer pool.Close()
 
 	conn, err := pool.Acquire(ctx)
 	if err != nil {
-		return fmt.Errorf("error: %v", err)
+		return fmt.Errorf("error: %w", err)
 	}
 	defer conn.Release()
 
 	_, err = conn.Exec(ctx, fmt.Sprintf("create database %s", dbName))
 	if err != nil {
-		return fmt.Errorf("error %v", err)
+		return fmt.Errorf("error %w", err)
 	}
 
 	return nil
