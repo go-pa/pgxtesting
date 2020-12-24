@@ -67,7 +67,7 @@ func TestClosePool(t *testing.T) {
 }
 
 func TestClosePoolStillOpenConnections(t *testing.T) {
-	if os.Getenv("NOSLOW") != "" {
+	if testing.Short() {
 		t.Skip()
 		return
 	}
