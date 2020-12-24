@@ -31,7 +31,6 @@ func GetDefaultURL() string {
 	return defaultURL
 }
 
-
 // SetEnvName sets the enviroment variable name used to fetch the pgxpool URL,
 // defaults name is PGURL.
 func SetEnvName(name string) {
@@ -46,7 +45,6 @@ func GetEnvName() string {
 	configMu.Lock()
 	defer configMu.Unlock()
 	return envName
-
 }
 
 // GetURL returns the pgx pool URL from environment or the default value.

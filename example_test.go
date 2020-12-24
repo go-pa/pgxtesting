@@ -34,7 +34,6 @@ func Example() {
 	if err := m.Up(); err != nil {
 		log.Fatal(err)
 	}
-
 }
 
 func ExampleCreateTestDatabase() {
@@ -57,7 +56,6 @@ func ExampleCreateTestDatabase() {
 	// not clean up before all sub tests are done so you might exceed
 	// maximum number of connections if you have many subtests.
 	pool.Close()
-
 }
 
 func ExampleCreateTestDatabaseEnv() {
@@ -70,5 +68,4 @@ func ExampleCreateTestDatabaseEnv() {
 
 	// and then only use this function to get a new pool for each test.
 	_ = pgxtesting.CreateTestDatabaseEnv(t)
-
 }
