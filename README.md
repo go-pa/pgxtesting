@@ -2,8 +2,8 @@
 
 # pgxtesting
 
-A Go package to give each test it's own database.
+A Go package to give each test it's own database when testing projects that use
+[pgx](https://github.com/jackc/pgx).
 
 
-There are other solution to this problems, this one is one that has fitted a
-bunch of my projects so I made it into it's own package.
+
