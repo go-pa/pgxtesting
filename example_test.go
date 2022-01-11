@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/go-pa/pgxtesting"
-	"github.com/golang-migrate/migrate"
 )
 
 func Example() {
@@ -24,18 +23,21 @@ func Example() {
 	}
 	log.Println("the test database name if", v)
 
-	// If you need an URL for the postgres test database you use pool.URL.
-	// If you need to strip pgxpool specific parameters from it to use it
-	// with the std library sql package or go-migrate, use the ConnURL()
-	// method.
-	m, _ := migrate.New(
-		"file://migrations",
-		pool.URL.ConnURL().String())
+	// example using go-migrate, commented out to not depend on go-migrate:
 
-	if err := m.Up(); err != nil {
-		t.Error(err)
-		return
-	}
+	// // If you need an URL for the postgres test database you use pool.URL.
+	// // If you need to strip pgxpool specific parameters from it to use it
+	// // with the std library sql package or go-migrate, use the ConnURL()
+	// // method.
+	// m, _ := migrate.New(
+	// 	"file://migrations",
+	// 	pool.URL.ConnURL().String())
+
+	// if err := m.Up(); err != nil {
+	// 	t.Error(err)
+	// 	return
+	// }
+
 }
 
 func ExampleCreateTestDatabase() {
