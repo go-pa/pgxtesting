@@ -19,7 +19,8 @@ func Example() {
 	var v string
 	err := row.Scan(&v)
 	if err != nil {
-		t.Fatal(err)
+		t.Error(err)
+		return
 	}
 	log.Println("the test database name if", v)
 
@@ -32,7 +33,8 @@ func Example() {
 		pool.URL.ConnURL().String())
 
 	if err := m.Up(); err != nil {
-		log.Fatal(err)
+		t.Error(err)
+		return
 	}
 }
 
